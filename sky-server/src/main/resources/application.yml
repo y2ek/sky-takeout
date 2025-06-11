@@ -20,6 +20,8 @@ mybatis:
   configuration:
     #开启驼峰命名
     map-underscore-to-camel-case: true
+    #往日志中打印出sql
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 logging:
   level:
