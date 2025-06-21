@@ -40,6 +40,9 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+
+    // 由于没有注册企业账户，所以无法使用微信支付，这里设置跳过微信支付
+    private static final boolean SKIP_WECHAT_PAY = true;
     /**
      * 用户下单
      * @param ordersSubmitDTO
@@ -110,22 +113,30 @@ public class OrderServiceImpl implements OrderService {
         Long userId = BaseContext.getCurrentId();
         User user = userMapper.getById(userId);
 
-        //调用微信支付接口，生成预支付交易单
-        JSONObject jsonObject = weChatPayUtil.pay(
-                ordersPaymentDTO.getOrderNumber(), //商户订单号
-                new BigDecimal(0.01), //支付金额，单位 元
-                "苍穹外卖订单", //商品描述
-                user.getOpenid() //微信用户的openid
-        );
+        // ******* 结合前端重定向，跳过微信支付步骤 ********
+        if (!SKIP_WECHAT_PAY) {
+            // 调用微信支付接口，生成预支付交易单
+            JSONObject jsonObject = weChatPayUtil.pay(
+                    ordersPaymentDTO.getOrderNumber(), //商户订单号
+                    new BigDecimal(0.01), //支付金额，单位 元
+                    "苍穹外卖订单", //商品描述
+                    user.getOpenid() //微信用户的openid
+            );
 
-        if (jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
-            throw new OrderBusinessException("该订单已支付");
+            if (jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
+                throw new OrderBusinessException("该订单已支付");
+            }
+
+            OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
+            vo.setPackageStr(jsonObject.getString("package"));
+
+            return vo;
+        } else {
+            // 跳过微信支付，根据订单号修改数据库中订单状态
+            paySuccess(ordersPaymentDTO.getOrderNumber());
         }
 
-        OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
-        vo.setPackageStr(jsonObject.getString("package"));
-
-        return vo;
+        return null;
     }
 
     /**
