@@ -17,4 +17,28 @@ public interface ReportService {
      * @return
      */
     TurnoverReportVO getTurnoverStatistics(LocalDate begin, LocalDate end);
+
+    /**
+     * 统计指定时间区间内的用户数据
+     * @param begin
+     * @param end
+     * @return
+     */
+    UserReportVO getUserStatistics(LocalDate begin, LocalDate end);
+
+    /**
+     * 统计指定时间区间内的订单数据
+     * @param begin
+     * @param end
+     * @return
+     */
+    OrderReportVO getOrderStatistics(LocalDate begin, LocalDate end);
+
+    /**
+     * 统计指定时间区间内的销量排名前10
+     * @param begin
+     * @param end
+     * @return
+     */
+    SalesTop10ReportVO getSalesTop10(LocalDate begin, LocalDate end);
 }
